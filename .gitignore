@@ -7,6 +7,8 @@
 examples/http-echo/http-echo
 examples/http-echo/http-echo-linux
 examples/http-client/http-client-linux
+examples/http-echo-instrumented/http-echo-instrumented-linux
+examples/http-client-instrumented/http-client-instrumented-linux
 *.test
 *.out
 
