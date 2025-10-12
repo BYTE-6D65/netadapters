@@ -1,0 +1,4 @@
+github.com/BYTE-6D65/pipeline v0.0.0-20251011174147-291b3c618a12 h1:r/WQ630mqK2wJbxKQGkbyVsjR/y9+q6HlzvfS/lTwIY=
+github.com/BYTE-6D65/pipeline v0.0.0-20251011174147-291b3c618a12/go.mod h1:bnVpDuCFAW6Sb4Y5xcvzMoOPSpPk1Ll4XZiX7ialHb4=
+github.com/google/uuid v1.6.0 h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=
+github.com/google/uuid v1.6.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
