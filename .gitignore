@@ -5,6 +5,8 @@
 *.so
 *.dylib
 examples/http-echo/http-echo
+examples/http-echo/http-echo-linux
+examples/http-client/http-client-linux
 *.test
 *.out
 

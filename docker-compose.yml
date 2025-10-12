@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  # HTTP Echo Server - receives requests and echoes them back
+  echo-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        EXAMPLE: http-echo
+    container_name: pipeline-echo-server
+    ports:
+      - "8080:8080"
+    networks:
+      - pipeline-network
+    environment:
+      - PORT=8080
+
+  # HTTP Client - sends requests to the echo server
+  http-client:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        EXAMPLE: http-client
+    container_name: pipeline-http-client
+    networks:
+      - pipeline-network
+    environment:
+      - TARGET_SERVER=http://echo-server:8080
+      - INTERVAL=2s
+    depends_on:
+      echo-server:
+        condition: service_started
+    restart: unless-stopped
+
+networks:
+  pipeline-network:
+    driver: bridge
+    name: pipeline-network
