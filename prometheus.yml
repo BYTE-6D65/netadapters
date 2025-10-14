@@ -1,0 +1,40 @@
+global:
+  scrape_interval: 5s      # Scrape every 5 seconds
+  evaluation_interval: 5s  # Evaluate rules every 5 seconds
+
+scrape_configs:
+  # Scrape the three relay nodes
+  - job_name: 'relay-nodes'
+    static_configs:
+      - targets:
+          - '192.168.64.10:9090'  # relay-a (NodeA)
+          - '192.168.64.11:9090'  # relay-b (NodeB)
+          - '192.168.64.12:9090'  # relay-c (NodeC)
+        labels:
+          environment: 'test'
+          cluster: 'circular-relay'
+
+    # Add node labels for easier filtering
+    relabel_configs:
+      - source_labels: [__address__]
+        regex: '192.168.64.10:.*'
+        target_label: node_name
+        replacement: 'NodeA'
+      - source_labels: [__address__]
+        regex: '192.168.64.11:.*'
+        target_label: node_name
+        replacement: 'NodeB'
+      - source_labels: [__address__]
+        regex: '192.168.64.12:.*'
+        target_label: node_name
+        replacement: 'NodeC'
+
+  # Scrape the initiator (payload generator)
+  - job_name: 'relay-initiator'
+    static_configs:
+      - targets:
+          - '192.168.64.13:9091'  # relay-initiator
+        labels:
+          environment: 'test'
+          cluster: 'circular-relay'
+          role: 'initiator'

@@ -139,10 +139,10 @@ Network adapters integrate seamlessly with Pipeline:
 ## 🔧 Examples
 
 See `examples/` for complete working examples:
-- `http-echo/` - Simple HTTP echo server
-- `websocket-chat/` - WebSocket chat room
-- `http-to-mqtt/` - HTTP → MQTT gateway
-- `mqtt-bridge/` - MQTT topic bridge
+- `http-echo/` - Minimal HTTP echo server using the adapter/emitter managers
+- `relay-node/` + `relay-initiator/` - Multi-adapter stress harness for load/telemetry validation
+- `http-client/` - Basic HTTP load generator (legacy demo - no pipeline integration)
+- `http-client-instrumented/` / `http-echo-instrumented/` - Verbose, human-readable telemetry for quick smoke tests
 
 ## 🎨 Event Payloads
 
@@ -161,109 +161,50 @@ type HTTPRequestPayload struct {
 }
 ```
 
-See [ARCHITECTURE.md](ARCHITECTURE.md) for all payload types.
+See [ARCHITECTURE.md](ARCHITECTURE.md) for full payload definitions and conventions.
 
-## 🔒 Security Features
+## 📊 Observability & Stress Testing
 
-- **TLS/SSL** - HTTPS, WSS support
-- **Authentication** - Bearer tokens, API keys, OAuth
-- **Rate Limiting** - Per-connection or global
-- **Input Validation** - Size limits, sanitization
-- **Timeouts** - Configurable per protocol
+The repo ships with a multi-adapter load harness and Grafana dashboard to validate Pipeline under pressure:
 
-## 📊 Observability
+1. **Build stress binaries**
+   ```bash
+   cd examples/relay-node
+   GOOS=linux GOARCH=arm64 go build -o relay-node-linux
+   cd ../relay-initiator
+   GOOS=linux GOARCH=arm64 go build -o relay-initiator-linux
+   ```
 
-Network adapters emit metrics events:
+2. **Deploy on Apple containers (or any Linux hosts)**
+   ```bash
+   # Node A listens on three adapters and forwards to Node B
+   ADAPTER_PORTS=:8080,:8081,:8082 \
+   NEXT_HOPS=http://node-b:8080,http://node-b:8081,http://node-b:8082 \
+   WORKER_COUNT=6 \
+   NODE_NAME=NodeA \
+   /relay-node
+   ```
 
-```go
-// Event Type: "net.metrics"
-type NetworkMetrics struct {
-    Protocol        string        // http, websocket, mqtt
-    ConnectionCount int           // Active connections
-    BytesReceived   uint64        // Total bytes in
-    BytesSent       uint64        // Total bytes out
-    ErrorCount      uint64
-    Timestamp       time.Time
-}
-```
+3. **Start the initiator with a ramping workload**
+   ```bash
+   TARGETS=http://node-a:8080,http://node-a:8081,http://node-a:8082 \
+   INTERVAL=3s \
+   PAYLOAD_START=1024 \
+   PAYLOAD_MAX=104857600 \
+   PAYLOAD_DURATION=1h \
+   /relay-initiator
+   ```
 
-Subscribe to metrics for monitoring dashboards:
-```go
-eng.ExternalBus().Subscribe(ctx, event.Filter{
-    Types: []string{"net.metrics", "net.connection.*"},
-}, metricsHandler)
-```
+4. **Import `grafana-working-dashboard.json`** into Grafana to track:
+   - External bus latency (`pipeline_event_send_duration_seconds`)
+   - Engine lifecycle metrics (`pipeline_engine_operations_total`, `pipeline_engine_operation_duration_seconds`)
+   - Buffer saturation per subscription
+   - Initiator payload size and request rate
 
-## 🧪 Testing
+For ad-hoc monitoring, `metrics-server.py` proxies `/metrics` endpoints and renders a lightweight dashboard without Grafana.
 
-Mock adapters and emitters for testing:
-
-```go
-// Create mock HTTP adapter
-mockAdapter := http.NewMockServerAdapter()
-
-// Inject test events
-mockAdapter.InjectRequest(testRequest)
-
-// Verify emitted responses
-responses := mockEmitter.GetResponses()
-```
-
-## 🎯 Roadmap
-
-### Phase 1: HTTP Foundation (Current)
-- ✅ Architecture design
-- 🚧 HTTP Server Adapter
-- 🚧 HTTP Client Emitter
-- 🚧 Request/Response correlation
-- 🚧 Examples and tests
-
-### Phase 2: WebSocket Support
-- WebSocket Server Adapter
-- WebSocket Client Emitter
-- Connection management
-- Chat server example
-
-### Phase 3: Raw Sockets
-- TCP Listener/Client
-- UDP Listener/Client
-- Echo server examples
-
-### Phase 4: MQTT Integration
-- MQTT Subscriber/Publisher
-- QoS handling
-- IoT bridge examples
-
-## 🔗 Related Projects
-
-- **[Pipeline](https://github.com/BYTE-6D65/pipeline)** - Core event processing library (required)
-- **[CmdWhl](https://github.com/BYTE-6D65/CmdWhl)** - Hardware I/O adapters
-
-## 🤝 Contributing
-
-Contributions welcome! To add a new protocol:
-
-1. Create `pkg/[protocol]/` directory
-2. Implement `pipeline/pkg/adapter.Adapter` interface
-3. Implement `pipeline/pkg/emitter.Emitter` interface
-4. Define event payload types
-5. Add tests and examples
-6. Update documentation
-
-See [ARCHITECTURE.md](ARCHITECTURE.md) for design guidelines.
+> **Note on sensitive traffic:** Adapters sharing an engine publish to the same external bus. Until request payloads are end-to-end encrypted, run adapters with different trust levels on separate engine instances or filter by metadata to prevent unintended data sharing.
 
 ## 📄 License
 
-MIT License - See LICENSE file for details
-
----
-
-**Status:** Early development - HTTP adapter in progress
-
-**Maintainer:** BYTE-6D65
-
-## 💭 Code Generation Philosophy
-
-Because generating code is so cheap now, all code has been written via LLMs. Extensive time has been dedicated to architecture planning and logical flow. Documentation is the source of truth and the concrete reference for code generation.
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
+MIT License - See LICENSE file for details.
