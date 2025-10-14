@@ -111,16 +111,16 @@ Network adapters integrate seamlessly with Pipeline:
 ┌─────────────────┐   │    ┌──────────────┐    ┌─────────────────┐
 │ WebSocket Msg   │ ──┼───▶│   Pipeline   │───▶│  Business Logic │
 └─────────────────┘   │    │  Event Bus   │    └─────────────────┘
-                      │    └──────────────┘             │
+                      │    └──────────────┘            │
 ┌─────────────────┐   │           │                    │
 │ MQTT Message    │ ──┘           │                    │
 └─────────────────┘               │                    │
                                   ▼                    ▼
-                         ┌──────────────┐    ┌─────────────────┐
-                         │  Metrics &   │    │   HTTP Response │
-                         │  Monitoring  │    │   MQTT Publish  │
-                         └──────────────┘    │   WebSocket Send│
-                                             └─────────────────┘
+                         ┌──────────────┐    ┌─────────────────-┐
+                         │  Metrics &   │    │   HTTP Response  │
+                         │  Monitoring  │    │   MQTT Publish   │
+                         └──────────────┘    │   WebSocket Send │
+                                             └─────────────────-┘
 ```
 
 **Key Concepts:**
@@ -129,20 +129,11 @@ Network adapters integrate seamlessly with Pipeline:
 - **Events** = Normalized representations of network I/O
 - **Pipeline** = Central event processing infrastructure
 
-## 📚 Documentation
-
-- **[ARCHITECTURE.md](ARCHITECTURE.md)** - Detailed design and specifications
-- **[docs/http.md](docs/http.md)** - HTTP adapter usage guide
-- **[docs/websocket.md](docs/websocket.md)** - WebSocket adapter usage guide
-- **[docs/patterns.md](docs/patterns.md)** - Common integration patterns
-
 ## 🔧 Examples
 
 See `examples/` for complete working examples:
 - `http-echo/` - Minimal HTTP echo server using the adapter/emitter managers
 - `relay-node/` + `relay-initiator/` - Multi-adapter stress harness for load/telemetry validation
-- `http-client/` - Basic HTTP load generator (legacy demo - no pipeline integration)
-- `http-client-instrumented/` / `http-echo-instrumented/` - Verbose, human-readable telemetry for quick smoke tests
 
 ## 🎨 Event Payloads
 
@@ -201,7 +192,6 @@ The repo ships with a multi-adapter load harness and Grafana dashboard to valida
    - Buffer saturation per subscription
    - Initiator payload size and request rate
 
-For ad-hoc monitoring, `metrics-server.py` proxies `/metrics` endpoints and renders a lightweight dashboard without Grafana.
 
 > **Note on sensitive traffic:** Adapters sharing an engine publish to the same external bus. Until request payloads are end-to-end encrypted, run adapters with different trust levels on separate engine instances or filter by metadata to prevent unintended data sharing.
 
