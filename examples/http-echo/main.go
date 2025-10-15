@@ -77,7 +77,7 @@ func main() {
 				log.Printf("Failed to create echo response: %v", err)
 				continue
 			}
-			eng.ExternalBus().Publish(context.Background(), *response)
+			eng.ExternalBus().Publish(context.Background(), response)
 		}
 	}()
 

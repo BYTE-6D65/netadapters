@@ -1,404 +1,1010 @@
 {
-  "dashboard": {
-    "title": "Pipeline Stress Test - Working",
-    "tags": ["pipeline", "stress-test"],
-    "timezone": "browser",
-    "schemaVersion": 38,
-    "version": 0,
-    "refresh": "5s",
-    "panels": [
+  "annotations": {
+    "list": [
       {
-        "id": 1,
-        "type": "stat",
-        "title": "🎯 Pipeline P99 Latency",
-        "description": "Target: <10µs (TCP_NODELAY fix)",
-        "gridPos": {"h": 6, "w": 6, "x": 0, "y": 0},
-        "targets": [
-          {
-            "expr": "histogram_quantile(0.99, sum(rate(pipeline_event_send_duration_seconds_bucket{bus=\"external\"}[2m])) by (le)) * 1000000",
-            "refId": "A",
-            "datasource": {
-              "type": "prometheus",
-              "uid": "df0zmdcs0lrswc"
-            }
-          }
-        ],
-        "fieldConfig": {
-          "defaults": {
-            "unit": "µs",
-            "decimals": 2,
-            "thresholds": {
-              "mode": "absolute",
-              "steps": [
-                {"color": "green", "value": null},
-                {"color": "yellow", "value": 10},
-                {"color": "orange", "value": 100},
-                {"color": "red", "value": 1000}
-              ]
-            }
-          }
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
         },
-        "options": {
-          "graphMode": "area",
-          "colorMode": "background",
-          "textMode": "value_and_name"
-        }
-      },
-      {
-        "id": 2,
-        "type": "stat",
-        "title": "📦 Current Payload Size",
-        "description": "Growing from 100B to 10MB",
-        "gridPos": {"h": 6, "w": 6, "x": 6, "y": 0},
-        "targets": [
-          {
-            "expr": "relay_request_payload_bytes",
-            "refId": "A",
-            "datasource": {
-              "type": "prometheus",
-              "uid": "df0zmdcs0lrswc"
-            }
-          }
-        ],
-        "fieldConfig": {
-          "defaults": {
-            "unit": "decbytes",
-            "decimals": 0,
-            "thresholds": {
-              "mode": "absolute",
-              "steps": [
-                {"color": "green", "value": null},
-                {"color": "yellow", "value": 1048576},
-                {"color": "orange", "value": 5242880},
-                {"color": "red", "value": 10485760}
-              ]
-            }
-          }
-        },
-        "options": {
-          "graphMode": "area",
-          "colorMode": "background",
-          "textMode": "value_and_name"
-        }
-      },
-      {
-        "id": 3,
-        "type": "stat",
-        "title": "📊 Total Requests",
-        "gridPos": {"h": 6, "w": 6, "x": 12, "y": 0},
-        "targets": [
-          {
-            "expr": "sum(relay_requests_received_total)",
-            "refId": "A",
-            "datasource": {
-              "type": "prometheus",
-              "uid": "df0zmdcs0lrswc"
-            }
-          }
-        ],
-        "fieldConfig": {
-          "defaults": {
-            "unit": "short",
-            "decimals": 0
-          }
-        },
-        "options": {
-          "graphMode": "area",
-          "colorMode": "value",
-          "textMode": "value_and_name"
-        }
-      },
-      {
-        "id": 4,
-        "type": "stat",
-        "title": "♻️ GC P99 Pause",
-        "description": "Garbage collection pause time",
-        "gridPos": {"h": 6, "w": 6, "x": 18, "y": 0},
-        "targets": [
-          {
-            "expr": "go_gc_duration_seconds{quantile=\"0.99\"} * 1000000",
-            "refId": "A",
-            "datasource": {
-              "type": "prometheus",
-              "uid": "df0zmdcs0lrswc"
-            }
-          }
-        ],
-        "fieldConfig": {
-          "defaults": {
-            "unit": "µs",
-            "decimals": 1,
-            "thresholds": {
-              "mode": "absolute",
-              "steps": [
-                {"color": "green", "value": null},
-                {"color": "yellow", "value": 1000},
-                {"color": "red", "value": 5000}
-              ]
-            }
-          }
-        },
-        "options": {
-          "graphMode": "area",
-          "colorMode": "value",
-          "textMode": "value_and_name"
-        }
-      },
-      {
-        "id": 5,
-        "type": "timeseries",
-        "title": "🔍 Payload Size vs Pipeline P99 Latency",
-        "description": "When does latency degrade with larger payloads?",
-        "gridPos": {"h": 10, "w": 24, "x": 0, "y": 6},
-        "targets": [
-          {
-            "expr": "histogram_quantile(0.99, sum(rate(pipeline_event_send_duration_seconds_bucket{bus=\"external\"}[1m])) by (le)) * 1000000",
-            "legendFormat": "Pipeline P99 Latency (µs)",
-            "refId": "A",
-            "datasource": {
-              "type": "prometheus",
-              "uid": "df0zmdcs0lrswc"
-            }
-          },
-          {
-            "expr": "relay_request_payload_bytes / 1024",
-            "legendFormat": "Payload Size (KB)",
-            "refId": "B",
-            "datasource": {
-              "type": "prometheus",
-              "uid": "df0zmdcs0lrswc"
-            }
-          }
-        ],
-        "fieldConfig": {
-          "defaults": {
-            "custom": {
-              "drawStyle": "line",
-              "lineWidth": 2,
-              "fillOpacity": 10
-            }
-          }
-        },
-        "options": {
-          "legend": {
-            "displayMode": "table",
-            "placement": "bottom",
-            "calcs": ["lastNotNull", "max", "mean"]
-          }
-        }
-      },
-      {
-        "id": 6,
-        "type": "timeseries",
-        "title": "📈 Request Rate",
-        "description": "Should be steady at ~1 req/sec",
-        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
-        "targets": [
-          {
-            "expr": "sum(rate(relay_requests_received_total[1m])) by (node_name)",
-            "legendFormat": "{{node_name}}",
-            "refId": "A",
-            "datasource": {
-              "type": "prometheus",
-              "uid": "df0zmdcs0lrswc"
-            }
-          }
-        ],
-        "fieldConfig": {
-          "defaults": {
-            "unit": "reqps",
-            "custom": {
-              "drawStyle": "line",
-              "lineWidth": 2
-            }
-          }
-        },
-        "options": {
-          "legend": {
-            "displayMode": "list",
-            "placement": "bottom"
-          }
-        }
-      },
-      {
-        "id": 7,
-        "type": "timeseries",
-        "title": "♻️ GC Frequency",
-        "description": "Garbage collections per minute",
-        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
-        "targets": [
-          {
-            "expr": "rate(go_gc_duration_seconds_count[1m]) * 60",
-            "legendFormat": "{{node_name}}",
-            "refId": "A",
-            "datasource": {
-              "type": "prometheus",
-              "uid": "df0zmdcs0lrswc"
-            }
-          }
-        ],
-        "fieldConfig": {
-          "defaults": {
-            "unit": "cpm",
-            "custom": {
-              "drawStyle": "line",
-              "lineWidth": 2
-            }
-          }
-        },
-        "options": {
-          "legend": {
-            "displayMode": "list",
-            "placement": "bottom"
-          }
-        }
-      },
-      {
-        "id": 8,
-        "type": "timeseries",
-        "title": "🔥 Memory Allocation Rate",
-        "description": "MB allocated per second",
-        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24},
-        "targets": [
-          {
-            "expr": "rate(go_memstats_alloc_bytes[1m]) / 1024 / 1024",
-            "legendFormat": "{{node_name}}",
-            "refId": "A",
-            "datasource": {
-              "type": "prometheus",
-              "uid": "df0zmdcs0lrswc"
-            }
-          }
-        ],
-        "fieldConfig": {
-          "defaults": {
-            "unit": "MBs",
-            "decimals": 2,
-            "custom": {
-              "drawStyle": "line",
-              "lineWidth": 2
-            }
-          }
-        }
-      },
-      {
-        "id": 9,
-        "type": "gauge",
-        "title": "🚫 Buffer Saturation",
-        "description": ">80% indicates backpressure",
-        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 24},
-        "targets": [
-          {
-            "expr": "(pipeline_subscription_buffer_usage / pipeline_subscription_buffer_size) * 100",
-            "legendFormat": "{{node_name}} {{subscription_id}}",
-            "refId": "A",
-            "datasource": {
-              "type": "prometheus",
-              "uid": "df0zmdcs0lrswc"
-            }
-          }
-        ],
-        "fieldConfig": {
-          "defaults": {
-            "unit": "percent",
-            "min": 0,
-            "max": 100,
-            "thresholds": {
-              "mode": "absolute",
-              "steps": [
-                {"color": "green", "value": 0},
-                {"color": "yellow", "value": 50},
-                {"color": "orange", "value": 80},
-                {"color": "red", "value": 95}
-              ]
-            }
-          }
-        },
-        "options": {
-          "showThresholdLabels": true,
-          "showThresholdMarkers": true
-        }
-      },
-      {
-        "id": 10,
-        "type": "timeseries",
-        "title": "⚙️ Engine Ops Rate",
-        "description": "Lifecycle operations per minute by type/status",
-        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 32},
-        "targets": [
-          {
-            "expr": "rate(pipeline_engine_operations_total[1m]) * 60",
-            "legendFormat": "{{operation}} ({{status}})",
-            "refId": "A",
-            "datasource": {
-              "type": "prometheus",
-              "uid": "df0zmdcs0lrswc"
-            }
-          }
-        ],
-        "fieldConfig": {
-          "defaults": {
-            "unit": "cpm",
-            "decimals": 2,
-            "custom": {
-              "drawStyle": "line",
-              "lineWidth": 2,
-              "fillOpacity": 10
-            }
-          }
-        },
-        "options": {
-          "legend": {
-            "displayMode": "table",
-            "placement": "bottom",
-            "calcs": ["lastNotNull", "max"]
-          }
-        }
-      },
-      {
-        "id": 11,
-        "type": "timeseries",
-        "title": "⏱️ Engine Operation P99",
-        "description": "P99 duration per operation (microseconds)",
-        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 32},
-        "targets": [
-          {
-            "expr": "histogram_quantile(0.99, sum(rate(pipeline_engine_operation_duration_seconds_bucket[2m])) by (operation, le)) * 1000000",
-            "legendFormat": "{{operation}} P99",
-            "refId": "A",
-            "datasource": {
-              "type": "prometheus",
-              "uid": "df0zmdcs0lrswc"
-            }
-          }
-        ],
-        "fieldConfig": {
-          "defaults": {
-            "unit": "µs",
-            "decimals": 2,
-            "custom": {
-              "drawStyle": "line",
-              "lineWidth": 2
-            },
-            "thresholds": {
-              "mode": "absolute",
-              "steps": [
-                {"color": "green", "value": null},
-                {"color": "yellow", "value": 1000},
-                {"color": "red", "value": 10000}
-              ]
-            }
-          }
-        },
-        "options": {
-          "legend": {
-            "displayMode": "table",
-            "placement": "bottom",
-            "calcs": ["lastNotNull", "max", "mean"]
-          }
-        }
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
       }
     ]
   },
-  "overwrite": true
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 0,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "bf12pt3bk7zlsf"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 4,
+        "x": 0,
+        "y": 0
+      },
+      "id": 3,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value_and_name",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.2.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "bf12pt3bk7zlsf"
+          },
+          "expr": "sum(relay_requests_received_total)",
+          "refId": "A"
+        }
+      ],
+      "title": "📊 Total Requests",
+      "transparent": true,
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "bf12pt3bk7zlsf"
+      },
+      "description": "Growing from 100B to 10MB",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "yellow",
+                "value": 1048576
+              },
+              {
+                "color": "orange",
+                "value": 5242880
+              },
+              {
+                "color": "red",
+                "value": 10485760
+              }
+            ]
+          },
+          "unit": "decbytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 6,
+        "x": 4,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "displayMode": "lcd",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
+      },
+      "pluginVersion": "12.2.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "bf12pt3bk7zlsf"
+          },
+          "expr": "relay_request_payload_bytes",
+          "refId": "A"
+        }
+      ],
+      "title": "📦 Current Payload Size",
+      "transparent": true,
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "bf12pt3bk7zlsf"
+      },
+      "description": ">80% indicates backpressure",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "yellow",
+                "value": 50
+              },
+              {
+                "color": "orange",
+                "value": 80
+              },
+              {
+                "color": "red",
+                "value": 95
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 8,
+        "x": 10,
+        "y": 0
+      },
+      "id": 9,
+      "options": {
+        "minVizHeight": 75,
+        "minVizWidth": 75,
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": true,
+        "showThresholdMarkers": true,
+        "sizing": "auto"
+      },
+      "pluginVersion": "12.2.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "bf12pt3bk7zlsf"
+          },
+          "expr": "(pipeline_subscription_buffer_usage / pipeline_subscription_buffer_size) * 100",
+          "legendFormat": "{{node_name}} {{subscription_id}}",
+          "refId": "A"
+        }
+      ],
+      "title": "🚫 Buffer Saturation",
+      "transparent": true,
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "bf12pt3bk7zlsf"
+      },
+      "description": "Garbage collection pause time",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 1,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "yellow",
+                "value": 1000
+              },
+              {
+                "color": "red",
+                "value": 5000
+              }
+            ]
+          },
+          "unit": "µs"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      },
+      "id": 4,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value_and_name",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.2.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "bf12pt3bk7zlsf"
+          },
+          "editorMode": "code",
+          "expr": "go_gc_duration_seconds{quantile=\"0.5\"} * 1000000",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "♻️ GC P50 Pause",
+      "transparent": true,
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "bf12pt3bk7zlsf"
+      },
+      "description": "Target: <10µs (TCP_NODELAY fix)",
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 2,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "yellow",
+                "value": 10
+              },
+              {
+                "color": "orange",
+                "value": 100
+              },
+              {
+                "color": "red",
+                "value": 1000
+              }
+            ]
+          },
+          "unit": "µs"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 4,
+        "x": 0,
+        "y": 6
+      },
+      "id": 1,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value_and_name",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.2.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "bf12pt3bk7zlsf"
+          },
+          "expr": "histogram_quantile(0.99, sum(rate(pipeline_event_send_duration_seconds_bucket{bus=\"external\"}[2m])) by (le)) * 1000000",
+          "refId": "A"
+        }
+      ],
+      "title": "🎯 Pipeline P99 Latency",
+      "transparent": true,
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "bf12pt3bk7zlsf"
+      },
+      "description": "When does latency degrade with larger payloads?",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 12
+      },
+      "id": 5,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max",
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.2.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "bf12pt3bk7zlsf"
+          },
+          "expr": "histogram_quantile(0.99, sum(rate(pipeline_event_send_duration_seconds_bucket{bus=\"external\"}[1m])) by (le)) * 1000000",
+          "legendFormat": "Pipeline P99 Latency (µs)",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "bf12pt3bk7zlsf"
+          },
+          "expr": "relay_request_payload_bytes / 1024",
+          "legendFormat": "Payload Size (KB)",
+          "refId": "B"
+        }
+      ],
+      "title": "🔍 Payload Size vs Pipeline P99 Latency",
+      "transparent": true,
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "bf12pt3bk7zlsf"
+      },
+      "description": "Should be steady at ~1 req/sec",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 22
+      },
+      "id": 6,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.2.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "bf12pt3bk7zlsf"
+          },
+          "expr": "sum(rate(relay_requests_received_total[1m])) by (node_name)",
+          "legendFormat": "{{node_name}}",
+          "refId": "A"
+        }
+      ],
+      "title": "📈 Request Rate",
+      "transparent": true,
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "bf12pt3bk7zlsf"
+      },
+      "description": "Garbage collections per minute",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-GrYlRd"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 22
+      },
+      "id": 7,
+      "options": {
+        "displayMode": "lcd",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
+      },
+      "pluginVersion": "12.2.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "bf12pt3bk7zlsf"
+          },
+          "expr": "rate(go_gc_duration_seconds_count[1m]) * 60",
+          "legendFormat": "{{node_name}}",
+          "refId": "A"
+        }
+      ],
+      "title": "♻️ GC Frequency",
+      "transparent": true,
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "bf12pt3bk7zlsf"
+      },
+      "description": "MB allocated per second",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 30
+      },
+      "id": 8,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "hidden",
+          "placement": "right",
+          "showLegend": false
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.2.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "bf12pt3bk7zlsf"
+          },
+          "expr": "rate(go_memstats_alloc_bytes[1m]) / 1024 / 1024",
+          "legendFormat": "{{node_name}}",
+          "refId": "A"
+        }
+      ],
+      "title": "🔥 Memory Allocation Rate",
+      "transparent": true,
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "bf12pt3bk7zlsf"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 30
+      },
+      "id": 12,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "hidden",
+          "placement": "right",
+          "showLegend": false
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.2.0",
+      "targets": [
+        {
+          "editorMode": "builder",
+          "expr": "process_resident_memory_bytes / 1000000",
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "process_resident_mem_MB",
+      "transparent": true,
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus"
+      },
+      "description": "Lifecycle operations per minute by type/status",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-GrYlRd"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 38
+      },
+      "id": 10,
+      "options": {
+        "displayMode": "lcd",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "text"
+      },
+      "pluginVersion": "12.2.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "bf12pt3bk7zlsf"
+          },
+          "expr": "rate(pipeline_engine_operations_total[1m]) * 60",
+          "legendFormat": "{{operation}} ({{status}})",
+          "refId": "A"
+        }
+      ],
+      "title": "⚙️ Engine Ops Rate",
+      "transparent": true,
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "bf12pt3bk7zlsf"
+      },
+      "description": "P99 duration per operation (microseconds)",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-GrYlRd"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 38
+      },
+      "id": 11,
+      "options": {
+        "displayMode": "lcd",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "text"
+      },
+      "pluginVersion": "12.2.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "bf12pt3bk7zlsf"
+          },
+          "expr": "histogram_quantile(0.99, sum(rate(pipeline_engine_operation_duration_seconds_bucket[2m])) by (operation, le)) * 1000000",
+          "legendFormat": "{{operation}} P99",
+          "refId": "A"
+        }
+      ],
+      "title": "⏱️ Engine Operation P99",
+      "transparent": true,
+      "type": "bargauge"
+    }
+  ],
+  "preload": false,
+  "refresh": "5s",
+  "schemaVersion": 42,
+  "tags": [
+    "pipeline",
+    "stress-test"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-5m",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Pipeline Stress Test - Working",
+  "uid": "547dcb02-3106-4a3b-b149-d8efed4de424",
+  "version": 17
 }

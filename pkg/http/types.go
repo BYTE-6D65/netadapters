@@ -34,6 +34,6 @@ type HTTPResponsePayload struct {
 	Body       []byte            `json:"body"`        // Response body
 
 	// Metadata
-	Timestamp time.Time     `json:"timestamp"` // When sent
-	Duration  time.Duration `json:"duration"`  // Processing time
+	Timestamp   time.Time `json:"timestamp"`    // When sent
+	DurationNs  int64     `json:"duration_ns"`  // Processing time in nanoseconds
 }

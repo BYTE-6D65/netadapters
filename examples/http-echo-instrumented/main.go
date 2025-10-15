@@ -154,7 +154,7 @@ func main() {
 			// Publish response to bus
 			log.Printf("%s Publishing response event to bus", LogBus)
 			startPublish := time.Now()
-			if err := eng.ExternalBus().Publish(context.Background(), *response); err != nil {
+			if err := eng.ExternalBus().Publish(context.Background(), response); err != nil {
 				log.Printf("%s ❌ Failed to publish response: %v", LogBus, err)
 				continue
 			}

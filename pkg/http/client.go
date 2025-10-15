@@ -30,7 +30,7 @@ func (e *ClientEmitter) Type() string {
 }
 
 // Emit sends an HTTP response by writing to the ResponseWriter
-func (e *ClientEmitter) Emit(ctx context.Context, evt event.Event) error {
+func (e *ClientEmitter) Emit(ctx context.Context, evt *event.Event) error {
 	// Decode response payload
 	codec := event.JSONCodec{}
 	var payload HTTPResponsePayload

@@ -63,7 +63,7 @@ func TestHTTPServerAdapter(t *testing.T) {
 				t.Errorf("Failed to create echo response: %v", err)
 				continue
 			}
-			eng.ExternalBus().Publish(context.Background(), *response)
+			eng.ExternalBus().Publish(context.Background(), response)
 		}
 	}()
 
@@ -143,7 +143,7 @@ func TestCreateEchoResponse(t *testing.T) {
 	}
 
 	// Create echo response
-	respEvt, err := CreateEchoResponse(*evt)
+	respEvt, err := CreateEchoResponse(evt)
 	if err != nil {
 		t.Fatalf("Failed to create echo response: %v", err)
 	}
@@ -214,6 +214,59 @@ func TestParsePathParams(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestServerAdapter_Metadata(t *testing.T) {
+	adapter := NewServerAdapter(":9999")
+
+	if adapter.ID() != "http-server-:9999" {
+		t.Errorf("Expected ID 'http-server-:9999', got %s", adapter.ID())
+	}
+
+	if adapter.Type() != "http-server" {
+		t.Errorf("Expected Type 'http-server', got %s", adapter.Type())
+	}
+}
+
+func TestServerAdapter_StartTwice(t *testing.T) {
+	adapter := NewServerAdapter(":19999")
+	eng := engine.New()
+	defer eng.Shutdown(context.Background())
+
+	adapterMgr := engine.NewAdapterManager(eng)
+	if err := adapterMgr.Register(adapter); err != nil {
+		t.Fatalf("Failed to register adapter: %v", err)
+	}
+	if err := adapterMgr.Start(); err != nil {
+		t.Fatalf("Failed to start adapter: %v", err)
+	}
+	defer adapterMgr.Stop()
+
+	// Try to start again - should fail since it's already running
+	err := adapter.Start(context.Background(), eng.ExternalBus(), clock.NewSystemClock())
+	if err == nil {
+		t.Error("Expected error when starting adapter twice, got nil")
+	}
+	if err != nil && err.Error() != "adapter already running" {
+		t.Errorf("Expected 'adapter already running' error, got: %v", err)
+	}
+}
+
+func TestServerAdapter_StopWhenNotRunning(t *testing.T) {
+	adapter := NewServerAdapter(":29999")
+
+	// Stop without starting - should be no-op
+	err := adapter.Stop()
+	if err != nil {
+		t.Errorf("Expected no error when stopping non-running adapter, got: %v", err)
+	}
+}
+
+func TestGetResponseWriter_NotFound(t *testing.T) {
+	_, ok := GetResponseWriter("non-existent-request-id")
+	if ok {
+		t.Error("Expected GetResponseWriter to return false for non-existent ID")
 	}
 }
 

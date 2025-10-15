@@ -136,12 +136,12 @@ func main() {
 
 	eng := engine.New(
 		engine.WithInternalBus(event.NewInMemoryBus(
-			event.WithBufferSize(64),
+			event.WithBufferSize(8),
 			event.WithBusName("internal"),
 			event.WithMetrics(metrics),
 		)),
 		engine.WithExternalBus(event.NewInMemoryBus(
-			event.WithBufferSize(256),
+			event.WithBufferSize(8),
 			event.WithBusName("external"),
 			event.WithMetrics(metrics),
 		)),
@@ -222,7 +222,7 @@ func main() {
 	codec := event.JSONCodec{}
 	var workerWG sync.WaitGroup
 
-	processEvent := func(evt event.Event) {
+	processEvent := func(evt *event.Event) {
 		adapterID := evt.Metadata["adapter_id"]
 		route, ok := adapterRoutes[adapterID]
 		if !ok {
@@ -274,13 +274,13 @@ func main() {
 			}
 			respEvt, _ := event.NewEvent("net.http.response", nodeName, respPayload, codec)
 			respEvt.WithMetadata("request_id", payload.RequestID)
-			eng.ExternalBus().Publish(context.Background(), *respEvt)
+			eng.ExternalBus().Publish(context.Background(), respEvt)
 			return
 		}
 
-		go func(p nethttp.HTTPRequestPayload, hc int, r *adapterRoute) {
+		go func(p *nethttp.HTTPRequestPayload, hc int, r *adapterRoute) {
 			observer := httpEgressDuration.WithLabelValues(r.id)
-			if err := forwardRequest(r.nextHop, &p, hc, nodeName, observer); err != nil {
+			if err := forwardRequest(r.nextHop, p, hc, nodeName, observer); err != nil {
 				log.Printf("❌ Forward error [%s]: %v", r.id, err)
 				totalStats.errors.Add(1)
 				r.stats.errors.Add(1)
@@ -290,7 +290,7 @@ func main() {
 				r.stats.forwarded.Add(1)
 				relayForwarded.WithLabelValues(r.id).Inc()
 			}
-		}(payload, hopCount, route)
+		}(&payload, hopCount, route)
 
 		respPayload := nethttp.HTTPResponsePayload{
 			RequestID:  payload.RequestID,
@@ -310,7 +310,7 @@ func main() {
 			return
 		}
 		respEvt.WithMetadata("request_id", payload.RequestID)
-		eng.ExternalBus().Publish(context.Background(), *respEvt)
+		eng.ExternalBus().Publish(context.Background(), respEvt)
 	}
 
 	for i := 0; i < workerCount; i++ {
@@ -361,9 +361,14 @@ func main() {
 }
 
 func forwardRequest(nextHop string, payload *nethttp.HTTPRequestPayload, hopCount int, nodeName string, observer prometheus.Observer) error {
-	body := fmt.Sprintf("[%s→hop%d] %s", nodeName, hopCount, string(payload.Body))
+	// Create prefix without copying the entire body
+	prefix := []byte(fmt.Sprintf("[%s→hop%d] ", nodeName, hopCount))
 
-	req, err := http.NewRequest("POST", nextHop+payload.Path, bytes.NewBufferString(body))
+	// Use io.MultiReader to concatenate prefix + body without copying
+	// This creates a reader that reads prefix first, then body, with zero copies
+	bodyReader := io.MultiReader(bytes.NewReader(prefix), bytes.NewReader(payload.Body))
+
+	req, err := http.NewRequest("POST", nextHop+payload.Path, bodyReader)
 	if err != nil {
 		return err
 	}

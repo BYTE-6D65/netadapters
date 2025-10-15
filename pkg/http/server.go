@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strings"
 	"sync"
 	"time"
 
@@ -163,7 +162,7 @@ func (a *ServerAdapter) handleRequest(ctx context.Context, w http.ResponseWriter
 	globalResponseWriters.Store(requestID, rw)
 
 	// Publish event
-	if err := a.bus.Publish(ctx, *evt); err != nil {
+	if err := a.bus.Publish(ctx, evt); err != nil {
 		globalResponseWriters.Delete(requestID)
 		http.Error(w, "Failed to process request", http.StatusInternalServerError)
 		return
@@ -223,49 +222,6 @@ func (rw *responseWriter) WriteResponse(statusCode int, headers map[string]strin
 	return nil
 }
 
-// CreateEchoResponse creates a response event that echoes the request
-func CreateEchoResponse(requestEvt event.Event) (*event.Event, error) {
-	// Decode request payload
-	codec := event.JSONCodec{}
-	var payload HTTPRequestPayload
-	if err := requestEvt.DecodePayload(&payload, codec); err != nil {
-		// Create error response
-		errorResponse := HTTPResponsePayload{
-			StatusCode: http.StatusInternalServerError,
-			Body:       []byte("Invalid request payload"),
-			Timestamp:  time.Now(),
-		}
-		return event.NewEvent("net.http.response", "http-echo", errorResponse, codec)
-	}
-
-	// Echo back request info
-	echoBody := fmt.Sprintf("Echo: %s %s\n\nRequest ID: %s\nHeaders: %v\nBody: %s",
-		payload.Method,
-		payload.Path,
-		payload.RequestID,
-		payload.Headers,
-		string(payload.Body),
-	)
-
-	response := HTTPResponsePayload{
-		RequestID:  payload.RequestID,
-		StatusCode: http.StatusOK,
-		Headers: map[string]string{
-			"Content-Type": "text/plain",
-		},
-		Body:      []byte(echoBody),
-		Timestamp: time.Now(),
-	}
-
-	evt, err := event.NewEvent("net.http.response", "http-echo", response, codec)
-	if err != nil {
-		return nil, err
-	}
-
-	evt.WithMetadata("request_id", payload.RequestID)
-	return evt, nil
-}
-
 // Global response writer registry
 var globalResponseWriters sync.Map
 
@@ -276,28 +232,4 @@ func GetResponseWriter(requestID string) (*responseWriter, bool) {
 		return nil, false
 	}
 	return val.(*responseWriter), true
-}
-
-// ParsePathParams extracts path parameters from URL
-// Example: "/users/:id" matches "/users/123" -> {"id": "123"}
-func ParsePathParams(pattern, path string) map[string]string {
-	params := make(map[string]string)
-
-	patternParts := strings.Split(strings.Trim(pattern, "/"), "/")
-	pathParts := strings.Split(strings.Trim(path, "/"), "/")
-
-	if len(patternParts) != len(pathParts) {
-		return params
-	}
-
-	for i, part := range patternParts {
-		if strings.HasPrefix(part, ":") {
-			paramName := strings.TrimPrefix(part, ":")
-			params[paramName] = pathParts[i]
-		} else if part != pathParts[i] {
-			return make(map[string]string) // No match
-		}
-	}
-
-	return params
 }

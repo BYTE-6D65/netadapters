@@ -1,5 +1,9 @@
 # Network Adapters
 
+> **⚠️ EXPERIMENTAL**: This project uses [go-json-experiment/json](https://github.com/go-json-experiment/json) (json/v2), which is still pre-1.0 and subject to breaking changes. Use in production with caution.
+
+> **🚧 UNDER CONSTRUCTION**: HTTP protocol support is functional but actively being developed. WebSocket, TCP, UDP, MQTT, and gRPC are planned but not yet implemented.
+
 **Network protocol adapters for the [Pipeline](https://github.com/BYTE-6D65/pipeline) event processing library.**
 
 Transform network I/O into events: HTTP requests, WebSocket messages, TCP/UDP packets, MQTT messages, and more flow through the Pipeline event bus for processing, transformation, and routing.
@@ -153,6 +157,47 @@ type HTTPRequestPayload struct {
 ```
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for full payload definitions and conventions.
+
+## 🧪 Testing
+
+### Run Tests
+
+```bash
+# Run all tests
+make test
+
+# Run with coverage
+make coverage
+
+# Generate HTML coverage report
+make coverage-html
+
+# Show detailed function coverage
+make coverage-func
+```
+
+### Test Coverage
+
+Current coverage: **82.5%**
+
+| Component | Coverage | Status |
+|-----------|----------|--------|
+| HTTP Client Emitter | 95.7% | ✅ Excellent |
+| HTTP Server Adapter | 84.3% | ✅ Good |
+| HTTP Examples/Testing | 83.3% | ✅ Good |
+| **Overall** | **82.5%** | ✅ Good |
+
+**Coverage Details:**
+- Unit tests for adapter/emitter lifecycle
+- Error path testing (invalid payloads, missing writers, double-start)
+- Integration tests with full engine/bus setup
+- Example helper functions (CreateEchoResponse, ParsePathParams)
+
+**Not Covered:**
+- Some deep error paths in request handling (body read failure, timeout edge cases)
+- HTTP server internal errors (rare runtime conditions)
+
+Target: 85%+ before adding new protocols.
 
 ## 📊 Observability & Stress Testing
 
